@@ -1,0 +1,59 @@
+ps_ip: 127.0.0.1
+
+num_executors:
+    - 1
+worker_ips: 
+    - 127.0.0.1:[1]
+
+exp_path: $FEDSCALE_HOME/fedscale/cloud
+
+executor_entry: execution/executor.py 
+aggregator_entry: aggregation/fedasync_aggregator.py
+
+auth:
+    ssh_user: ""
+    ssh_private_key: ~/.ssh/id_rsa
+
+setup_commands:
+    - echo "Running on Kaggle"
+
+job_conf: 
+    - job_name: fedbuff_kaggle_test
+    - log_path: $FEDSCALE_HOME/benchmark
+
+    - wandb_token: ""
+    
+    # FedBuff Parameters
+    - num_participants: 1              # Buffer Size (K=10)
+    - max_concurrency: 100             
+    - max_staleness: 20                 # Staleness bound
+    
+    # Dataset
+    - data_set: cifar10
+    - data_dir: $FEDSCALE_HOME/benchmark/dataset/cifar10/data
+    - data_map_file: $FEDSCALE_HOME/benchmark/dataset/cifar10/client_data_mapping/train.csv
+    
+    # Device Simulation
+    - device_conf_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_device_capacity
+    - device_avail_file: $FEDSCALE_HOME/benchmark/dataset/data/device_info/client_behave_trace
+    
+    # Training
+    - model_zoo: fedscale-torch-zoo
+    - model: fedbuff_cifar10
+    - eval_interval: 50                 
+    - rounds: 50000                       
+    - learning_rate: 0.05
+    - min_learning_rate: 5e-5
+    - client_momentum: 0.0
+    - weight_decay: 0.0
+    - decay_factor: 0.99    # client lr decay
+    - decay_round: 20
+    - server_learning_rate: 0.2
+    - use_lr_norm: True
+    - batch_size: 32
+    - test_bsz: 32
+    - filter_less: 10 
+    - local_epochs: 1
+    - num_loaders: 2                    
+    - use_cuda: True                   
+    - save_checkpoint: False
