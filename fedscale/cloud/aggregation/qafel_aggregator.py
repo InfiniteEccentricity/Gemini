@@ -3,6 +3,8 @@ from fedbuff_aggregator import FedBuffAggregator
 from fedscale.utils.quantizer import qsgd_quantize
 from fedscale.cloud.logger.aggregator_logging import init_logging
 from fedscale.cloud.aggregation.aggregator import Aggregator
+import logging
+import sys
 
 class QAFeLAggregator(FedBuffAggregator):
     def __init__(self, args):
