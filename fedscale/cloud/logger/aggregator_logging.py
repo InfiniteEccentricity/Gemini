@@ -1,7 +1,6 @@
 from fedscale.cloud.fllibs import *
 import fedscale.cloud.config_parser as parser
 from fedscale.cloud.logger.aggregator_logging import init_logging
-from fedscale.cloud.aggregation.aggregator import Aggregator
 logDir = None
 
 
