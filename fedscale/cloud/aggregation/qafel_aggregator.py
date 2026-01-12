@@ -1,14 +1,19 @@
 import copy
 from fedbuff_aggregator import FedBuffAggregator
 from fedscale.utils.quantizer import qsgd_quantize
+from fedscale.cloud.logger.aggregator_logging import init_logging
+from fedscale.cloud.aggregation.aggregator import Aggregator
 
 class QAFeLAggregator(FedBuffAggregator):
     def __init__(self, args):
         super().__init__(args)
+        init_logging()
         # Initialize hidden state with starting weights 
         self.hidden_weights = copy.deepcopy(self.model_wrapper.get_weights())
         self.quant_bits = getattr(args, 'quant_bits', 4)
-
+    def setup_env(self):
+        """Standard FedScale environment setup including logging handlers."""
+        super().setup_env() # This sets up the actual file handlers
     def update_weight_aggregation(self, results):
         """Standard FedBuff delta accumulation."""
         super().update_weight_aggregation(results)

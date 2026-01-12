@@ -1,10 +1,12 @@
 from fedscale.cloud.execution.executor import Executor
 from fedscale.utils.quantizer import qsgd_quantize
 import copy
+import fedscale.cloud.logger.executor_logging as logger
 
 class QAFeLExecutor(Executor):
     def __init__(self, args):
         super().__init__(args)
+        logger.initiate_client_setting()
         # Local copy of hidden state 
         self.hidden_weights = copy.deepcopy(self.model_adapter.get_weights())
         self.quant_bits = getattr(args, 'quant_bits', 4)
