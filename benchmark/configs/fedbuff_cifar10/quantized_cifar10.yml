@@ -7,7 +7,7 @@ worker_ips:
 
 exp_path: $FEDSCALE_HOME/fedscale/cloud
 
-executor_entry: execution/qafel_executor.py
+executor_entry: execution/executor.py
 aggregator_entry: aggregation/qafel_aggregator.py
 
 auth:
