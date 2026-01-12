@@ -1,5 +1,6 @@
 import copy
-from fedbuff_aggregator import FedBuffAggregator
+import logging
+from fedscale.cloud.aggregation.fedbuff_aggregator import FedBuffAggregator
 from fedscale.utils.quantizer import qsgd_quantize
 from fedscale.cloud.logger.aggregator_logging import init_logging
 from fedscale.cloud.aggregation.aggregator import Aggregator
