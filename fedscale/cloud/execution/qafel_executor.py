@@ -1,63 +1,55 @@
 import copy
 import logging
-import numpy as np
+from overrides import overrides
 from fedscale.cloud.execution.executor import Executor
 from fedscale.utils.quantizer import qsgd_quantize
-from fedscale.cloud.fllibs import *
+import fedscale.cloud.config_parser as parser
 
 class QAFeLExecutor(Executor):
     def __init__(self, args):
-        super(QAFeLExecutor, self).__init__(args)
-        
-        # 1. Initialize hidden state (x_hat) with starting weights
-        # We use the model_adapter to get weights as a list of tensors
+        super().__init__(args)
+        # Local copy of hidden state x_hat
         self.hidden_weights = copy.deepcopy(self.model_adapter.get_weights())
         self.quant_bits = getattr(args, 'quant_bits', 4)
-        logging.info(f"QAFeL Executor initialized with {self.quant_bits} bits quantization.")
 
+    @overrides
     def UpdateModel(self, model_weights):
-        """
-        In QaFEL, the 'model_weights' received from the server is actually q_s (quantized delta).
-        We update our hidden state x_hat = x_hat + q_s.
-        """
-        q_s_update = model_weights
+        """Receive quantized delta q_s from server and update local hidden state."""
+        # In QaFEL, the received payload is the delta q_s
+        q_s_update = model_weights 
         self.round += 1
         
-        # 2. Update shared hidden state x_hat using received q_s
-        self.hidden_weights = [hw + qs for hw, qs in zip(self.hidden_weights, q_s_update)]
+        ordered_keys = sorted(self.hidden_weights.keys())
         
-        # 3. Set the actual model used for training to match the updated hidden state
+        # Update local hidden state: x_hat = x_hat + q_s
+        for k in ordered_keys:
+            self.hidden_weights[k] += q_s_update[k]
+            
+        # Sync the training model to start from the updated hidden state
         self.model_adapter.set_weights(self.hidden_weights, is_aggregator=False)
-        logging.info(f"QAFeL: Hidden state updated for round {self.round}")
+        logging.info(f"QAFeL Executor: Hidden state updated for round {self.round}")
 
+    @overrides
     def training_handler(self, client_id, conf, model):
-        """
-        Perform local training and then quantize the delta.
-        """
-        # 4. Train normally starting from the hidden state (model)
-        # Note: model here is the hidden_weights we synced in UpdateModel
-        train_res = super(QAFeLExecutor, self).training_handler(client_id, conf, model)
+        """Train and return client quantized delta Q_c(y_p - x_hat)."""
+        # 1. Run standard training (TorchClient.train)
+        train_res = super().training_handler(client_id, conf, model)
         
-        # 5. Extract trained weights (y_p)
+        # 2. Extract trained weights (y_p)
         client_weights = train_res['update_weight']
+        ordered_keys = sorted(client_weights.keys())
         
-        # Handle dictionary weights (standard in some FedScale versions)
-        if isinstance(client_weights, dict):
-            # Ensure order matches hidden_weights
-            ordered_keys = sorted(client_weights.keys())
-            client_weights_list = [client_weights[k] for k in ordered_keys]
-            
-            # Calculate Delta: (y_p - x_hat)
-            diff = [cw - hw for cw, hw in zip(client_weights_list, self.hidden_weights)]
-            
-            # 6. Client-side Quantization Q_c
-            q_c = qsgd_quantize(diff, bits=self.quant_bits)
-            
-            # Reconstruct dict for aggregator
-            train_res['update_weight'] = {k: q_c[i] for i, k in enumerate(ordered_keys)}
-        else:
-            # Handle list weights
-            diff = [cw - hw for cw, hw in zip(client_weights, self.hidden_weights)]
-            train_res['update_weight'] = qsgd_quantize(diff, bits=self.quant_bits)
+        # 3. Calculate Delta: (Trained weights - Local hidden state)
+        diff = [client_weights[k] - self.hidden_weights[k] for k in ordered_keys]
+        
+        # 4. Client-side Quantization Q_c 
+        q_c_list = qsgd_quantize(diff, bits=self.quant_bits)
+        
+        # 5. Pack quantized delta back into results
+        train_res['update_weight'] = {k: q_c_list[i] for i, k in enumerate(ordered_keys)}
         
         return train_res
+
+if __name__ == "__main__":
+    executor = QAFeLExecutor(parser.args)
+    executor.run()
