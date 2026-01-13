@@ -8,14 +8,15 @@ import fedscale.cloud.config_parser as parser
 class QAFeLExecutor(Executor):
     def __init__(self, args):
         super().__init__(args)
-        # Local copy of hidden state x_hat
+        # Note: self.model_adapter is created in the base Executor __init__ 
+        # so it is safe to copy here.
         self.hidden_weights = copy.deepcopy(self.model_adapter.get_weights())
         self.quant_bits = getattr(args, 'quant_bits', 4)
 
     @overrides
     def UpdateModel(self, model_weights):
         """Receive quantized delta q_s from server and update local hidden state."""
-        # In QaFEL, the received payload is the delta q_s
+        # model_weights is the q_s_dict sent by the aggregator
         q_s_update = model_weights 
         self.round += 1
         
@@ -39,13 +40,13 @@ class QAFeLExecutor(Executor):
         client_weights = train_res['update_weight']
         ordered_keys = sorted(client_weights.keys())
         
-        # 3. Calculate Delta: (Trained weights - Local hidden state)
+        # 3. Calculate Delta: (Trained weights y_p - Local hidden state x_hat)
         diff = [client_weights[k] - self.hidden_weights[k] for k in ordered_keys]
         
         # 4. Client-side Quantization Q_c 
         q_c_list = qsgd_quantize(diff, bits=self.quant_bits)
         
-        # 5. Pack quantized delta back into results
+        # 5. Pack quantized delta back into results for the server
         train_res['update_weight'] = {k: q_c_list[i] for i, k in enumerate(ordered_keys)}
         
         return train_res
