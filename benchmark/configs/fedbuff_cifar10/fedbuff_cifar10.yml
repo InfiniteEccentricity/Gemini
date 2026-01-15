@@ -8,7 +8,7 @@ worker_ips:
 exp_path: $FEDSCALE_HOME/fedscale/cloud
 
 executor_entry: execution/executor.py 
-aggregator_entry: aggregation/fedbuff_aggregator.py
+aggregator_entry: aggregation/quantized_aggregator_fedbuff.py
 
 auth:
     ssh_user: ""
@@ -20,7 +20,7 @@ setup_commands:
 job_conf: 
     - job_name: fedbuff_kaggle_test
     - log_path: $FEDSCALE_HOME/benchmark
-
+    - quantized: True
     - wandb_token: ""
     
     # FedBuff Parameters

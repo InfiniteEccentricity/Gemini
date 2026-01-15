@@ -35,7 +35,7 @@ class TorchClient(ClientBase):
         self.epoch_train_loss = 1e-4
         self.completed_steps = 0
         self.loss_squared = 0
-
+    
     @overrides
     def train(self, client_data, model, conf):
         """

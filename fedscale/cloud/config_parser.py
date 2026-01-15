@@ -71,6 +71,8 @@ parser.add_argument("--save_checkpoint", type=bool, default=False)
 
 # Quantizer on/off
 parser.add_argument("--quantized", type=bool, default=False)
+# Number of bits for quantizer
+parser.add_argument('--quantization_bits', type=int, default=8)
 
 
 # The configuration of different hyper-parameters for training
@@ -129,9 +131,6 @@ parser.add_argument("--malicious_factor", type=int, default=1e15)
 # for asynchronous FL
 parser.add_argument("--max_concurrency", type=int, default=10)
 parser.add_argument("--max_staleness", type=int, default=5)
-# parser.add_argument("--quant_bits", type=int, default=32)
-# parser.add_argument("--server_learning_rate", type=float, default=1.0)
-# parser.add_argument("--server_momentum", type=float, default=0.0)
 
 # for differential privacy
 parser.add_argument("--noise_factor", type=float, default=0.1)

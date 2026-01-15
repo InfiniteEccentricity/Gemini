@@ -15,6 +15,8 @@ import fedscale.cloud.logger.executor_logging as logger
 from fedscale.cloud.channels.channel_context import ClientConnections
 # from fedscale.cloud.execution.tensorflow_client import TensorflowClient
 from fedscale.cloud.execution.torch_client import TorchClient
+from fedscale.cloud.execution.quantized_client import QuantizedClient
+
 from fedscale.cloud.execution.data_processor import collate, voice_collate_fn
 from fedscale.cloud.execution.rl_client import RLClient
 from fedscale.cloud.fllibs import *
@@ -297,6 +299,8 @@ class Executor(object):
         elif conf.engine == commons.PYTORCH:
             if conf.task == "rl":
                 return RLClient(conf)
+            elif conf.quantized:
+                return QuantizedClient(conf)
             else:
                 return TorchClient(conf)
         raise "Currently, FedScale supports tensorflow and pytorch."

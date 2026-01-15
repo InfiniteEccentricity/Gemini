@@ -2,6 +2,7 @@ from typing import List
 
 import numpy as np
 import torch
+import inspect
 import copy
 from fedscale.cloud.aggregation.optimizers import TorchServerOptimizer
 from fedscale.cloud.internal.model_adapter_base import ModelAdapterBase
@@ -27,6 +28,12 @@ class TorchModelAdapter(ModelAdapterBase):
         :param is_aggregator: boolean indicating whether the caller is the aggregator
         :param client_training_results: list of gradients from every clients, for q-fedavg
         """
+        print("\n=== MODEL TRACE (EXECUTOR) ===")
+        print("Model class     :", type(self.model))
+        print("Model module    :", self.model.__class__.__module__)
+        print("Model file path :", inspect.getfile(self.model.__class__))
+        print("==============================\n")
+
         last_grad_weights = [param.data.clone() for param in self.model.state_dict().values()]
         new_state_dict = {
             name: torch.from_numpy(np.asarray(weights[i], dtype=np.float32))
